@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anonymizer 去識別化工具｜Email 與自訂關鍵字版 V3（iPhone Safari 相容）</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z' fill='%230969da'/%3E%3Crect x='7' y='10' width='10' height='3' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1f2328;--muted:#656d76;--border:#d0d7de;--accent:#0969da;--weak:#ddf4ff;--ok:#1a7f37;--hl:#2da44e}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--text:#e6edf3;--muted:#8d96a0;--border:#30363d;--accent:#4493f8;--weak:#102a4c;--ok:#3fb950;--hl:#7ee787}}
+:root[data-hl="1"]{--hl:#0969da}:root[data-hl="2"]{--hl:#bf8700}:root[data-hl="3"]{--hl:var(--text)}
+@media(prefers-color-scheme:dark){:root[data-hl="1"]{--hl:#79c0ff}:root[data-hl="2"]{--hl:#e3b341}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Microsoft JhengHei",sans-serif;line-height:1.55}
+.wrap{max-width:1200px;margin:auto;padding:20px 16px 40px}h1{font-size:1.35rem;margin:0}h2{font-size:1rem;margin:0}h3{font-size:.96rem;margin:8px 0}
+.sub,.hint,.stat{color:var(--muted);font-size:.85rem}.sub{margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap}.btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-size:.84rem;cursor:pointer;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 11px}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}button:hover{filter:brightness(1.08)}button:disabled{cursor:default;opacity:.45}
+textarea,select{font: .87rem Consolas,"Microsoft JhengHei",monospace;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:9px;width:100%}textarea{min-height:250px;resize:vertical}select{width:auto;padding:5px}
+label{font-size:.9rem;cursor:pointer}label input{margin-right:4px}details>summary{cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center;list-style:none}details>summary::after{content:"▾";margin-left:auto;color:var(--muted)}details:not([open])>summary::after{transform:rotate(-90deg)}details[open]>summary{margin-bottom:12px}
+.editor{height:300px;min-height:130px;max-height:75vh;position:relative;overflow:hidden;resize:vertical;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.backdrop,#input{position:absolute;inset:0;width:100%;height:100%;padding:10px;margin:0;border:0;border-radius:0;resize:none;font: .87rem/1.55 Consolas,"Microsoft JhengHei",monospace;white-space:pre-wrap;overflow-wrap:break-word;overflow-y:auto;overflow-x:hidden}
+.backdrop{display:none;pointer-events:none}#input{min-height:0;background:var(--card);color:var(--text);caret-color:var(--text);-webkit-user-select:text;user-select:text}#input::placeholder{color:var(--muted)}#input::selection{background:rgba(9,105,218,.25)}
+.hl{background:rgba(128,128,128,.22);color:var(--hl);border-radius:3px}.outbox{height:300px;min-height:130px;max-height:75vh;overflow:auto;resize:vertical;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--border);border-radius:8px;padding:10px;font:.87rem/1.55 Consolas,"Microsoft JhengHei",monospace}.outbox .hl{padding:0 2px;border:1px solid rgba(128,128,128,.35)}
+.swatch{display:inline-block;width:9px;height:9px;background:var(--hl);border-radius:50%}.kwbox textarea{min-height:85px;max-height:280px;margin:6px 0}.settings{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;margin-top:16px}.settings label{display:inline-flex;align-items:center;gap:3px}.settings strong{margin-right:4px}
+.drop{border:2px dashed var(--border);border-radius:9px;text-align:center;padding:23px;cursor:pointer;color:var(--muted)}.drop:hover,.drop.drag{border-color:var(--accent);background:var(--weak);color:var(--text)}
+.tablebox{overflow-x:auto;max-height:290px;overflow-y:auto}table{width:100%;border-collapse:collapse;font-size:.84rem}th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;overflow-wrap:anywhere}th{color:var(--muted)}.toast{font-size:.83rem;color:var(--ok)}.warn{color:#a26700}.stat{margin-top:7px}.mono{font-family:Consolas,monospace}.file-actions{display:flex;gap:4px;flex-wrap:wrap}
+@media(max-width:550px){.panel-head{align-items:flex-start}.wrap{padding:14px 10px}.card{padding:12px}.settings{display:grid;gap:8px}}
+/* iPhone Safari：使用正常文件流中的原生 textarea，避免 absolute 定位/覆蓋層攔截觸控。 */
+#input{display:block;position:static!important;inset:auto!important;width:100%;height:300px;min-height:160px;max-height:70vh;resize:vertical;margin:0;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:16px;line-height:1.55;-webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none;touch-action:auto;}
+#appState{padding:7px 10px;border-radius:7px;border:1px solid var(--border);margin-bottom:12px;background:var(--card);font-size:.86rem;overflow-wrap:anywhere}
+#appState.ready{border-color:var(--ok);color:var(--ok)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Anonymizer 去識別化工具｜iPhone Safari 相容版 V3</h1>
+  <p class="sub">精簡版：僅自動遮蔽 <strong>Email</strong> 與自行輸入的<strong>關鍵字</strong>。其他資料保持原樣。所有處理皆在本機瀏覽器完成，不連線或上傳。</p>
+  <div id="appState" role="status" aria-live="polite">程式尚未啟動。若一直顯示此訊息，可能正在使用不執行 JavaScript 的 HTML 預覽模式，請改用 Safari 開啟已部署的 HTTPS 網址。</div>
+  <section class="grid" aria-label="去識別化文字">
+    <div class="card"><div class="panel-head"><h2>① 原始文字</h2><div class="btns"><button class="primary" id="btnPaste" type="button">從剪貼簿貼上</button><button id="btnApply" type="button">處理文字</button><button id="btnSample">範例</button><button id="btnClear">清除</button><span class="toast" id="toastIn" role="status" aria-live="polite"></span></div></div>
+      <textarea id="input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="原始文字" placeholder="先點選這個文字框，再長按選「貼上」，或直接輸入文字…"></textarea>
+      <div class="stat" id="inputStat">未輸入文字</div><div class="hint">iPhone 請先點一下上方白色文字框，再長按選「貼上」。上方按鈕可能受 iOS 剪貼簿權限限制；若結果未更新，可按「處理文字」。</div>
+    </div>
+    <div class="card"><div class="panel-head"><h2>② 去識別化結果</h2><div class="btns"><button id="btnHl" title="切換遮蔽標色"><span class="swatch"></span> <span id="hlName">綠</span></button><button class="primary" id="btnCopyOut">複製</button><span class="toast" id="toastOut"></span></div></div>
+      <div id="output" class="outbox" tabindex="0" aria-label="去識別化結果"></div><div class="stat" id="resultStat">沒有要遮蔽的內容</div>
+    </div>
+  </section>
+  <section class="card"><div class="panel-head"><h2>批次處理檔案</h2><div class="btns"><label for="enc">編碼</label><select id="enc"><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="utf-16le">UTF-16 LE</option><option value="shift_jis">Shift_JIS</option></select>
+    <button id="btnZip" disabled>打包 ZIP</button><button id="btnDlAll" disabled>全部下載</button><button id="btnMergeDl" disabled>合併下載</button><button id="btnMergeCopy" disabled>合併複製</button><button id="btnClearFiles" disabled>清除</button><span id="toastFiles" class="toast"></span></div></div>
+    <input type="file" id="fileInput" multiple hidden><div id="drop" class="drop">把文字檔拖曳到這裡，或點此選擇檔案（可多選）<div class="hint">僅套用 Email 與自訂關鍵字規則；輸出一律為 UTF-8</div></div>
+    <div class="tablebox"><table id="fileTable" hidden><thead><tr><th>原始檔名</th><th>輸出檔名</th><th>大小</th><th>取代數</th><th>操作</th></tr></thead><tbody id="fileBody"></tbody></table></div><textarea id="filePreview" readonly hidden style="min-height:150px;margin-top:10px" aria-label="檔案預覽"></textarea>
+  </section>
+  <section class="card"><details id="restoreCard"><summary>③ 還原 AI 回覆（把代號換回原始內容）</summary>
+    <p class="hint">使用本次產生的代號；也可以將先前匯出的對照表 JSON 貼到下方。如果重新整理網頁且未啟用「記住對照表」，請匯入備份。</p>
+    <div class="grid"><div><textarea id="aiReply" style="min-height:175px" placeholder="貼上 AI 回覆…" aria-label="待還原文字"></textarea><textarea id="mapImport" style="min-height:75px;margin-top:8px" placeholder="（選用）貼上對照表 JSON" aria-label="匯入對照表 JSON"></textarea></div>
+    <div><div class="btns" style="margin-bottom:8px"><button class="primary" id="btnRestore">還原</button><button id="btnCopyRestore">複製</button><span class="toast" id="toastRestore"></span></div><textarea id="restored" readonly style="min-height:175px" aria-label="還原結果"></textarea></div></div>
+    <div class="panel-head" style="margin-top:18px"><h3>批次還原檔案</h3><div class="btns"><label for="encR">編碼</label><select id="encR"><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="utf-16le">UTF-16 LE</option><option value="shift_jis">Shift_JIS</option></select><button id="btnRZip" disabled>打包 ZIP</button><button id="btnRDlAll" disabled>全部下載</button><button id="btnRMergeDl" disabled>合併下載</button><button id="btnRMergeCopy" disabled>合併複製</button><button id="btnRClear" disabled>清除</button><span class="toast" id="toastRFiles"></span></div></div>
+    <input type="file" id="rfileInput" multiple hidden><div id="rdrop" class="drop">把要還原的文字檔拖曳到這裡，或點此選擇檔案（可多選）</div><div class="tablebox"><table id="rfileTable" hidden><thead><tr><th>原始檔名</th><th>還原後檔名</th><th>大小</th><th>還原數</th><th>操作</th></tr></thead><tbody id="rfileBody"></tbody></table></div><textarea id="rfilePreview" readonly hidden style="min-height:150px;margin-top:10px"></textarea>
+  </details></section>
+  <details class="card" id="optsCard" open><summary>設定與關鍵字 <span class="hint" id="kwCount"></span></summary>
+    <div class="kwbox"><label for="keywords"><strong>額外要遮蔽的關鍵字</strong>（逗號或換行分隔，例如公司名、人物姓名、地址等機敏個資）</label>
+      <textarea id="keywords" spellcheck="false" placeholder="例如：甲乙公司, 王小明&#10;臺北市信義區某路1號" aria-label="自訂遮蔽關鍵字"></textarea>
+      <div class="btns"><button id="btnKwExport">打包下載</button><button id="btnKwImport">上傳匯入</button><button id="btnKwSaveDef">存為預設</button><button id="btnKwLoadDef">載入預設</button><button id="btnKwClear">清空</button><span class="toast" id="toastKw"></span></div>
+      <input type="file" id="kwFile" accept=".json,.txt,.csv,text/plain,application/json" hidden>
+    </div>
+    <div class="settings"><strong>要遮蔽的項目</strong><label><input id="optEmail" type="checkbox" checked> Email</label><strong>代號與其他</strong><label><input id="showType" type="checkbox" checked> 顯示類型（如 [EMAIL-xxxxx]）</label><label><input id="remember" type="checkbox"> 在本機瀏覽器記住對照表</label><button id="btnRegen">重新產生所有代號</button><span class="toast" id="toastRegen"></span></div>
+  </details>
+  <section class="card"><details><summary>對照表（目前文字與檔案用到的代號）</summary><div class="btns" style="margin:9px 0"><button id="btnCopyMap">複製對照表 JSON</button><button id="btnDlMap">下載對照表</button><span id="toastMap" class="toast"></span></div>
+    <p class="hint">對照表包含原始 Email 與關鍵字，屬機敏資料，請妥善保管。預設不會保留於瀏覽器儲存空間。</p><div class="tablebox"><table><thead><tr><th>代號</th><th>原始內容</th></tr></thead><tbody id="mapBody"></tbody></table></div></details></section>
+</main>
+<script>
+window.addEventListener('error',function(e){var a=document.getElementById('appState');if(a){a.textContent='程式執行錯誤：'+String(e.message||'未知錯誤');a.classList.remove('ready');}});
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const STORE = 'anonymizer.emailonly.';
+const KEY_OPT = STORE + 'options.v1', KEY_DEF = STORE + 'keywords.default.v1', KEY_MAP = STORE + 'map.v1', KEY_UI = STORE + 'ui.v1';
+const KEYWORDS = () => [...new Map(String($('keywords').value || '').split(/[,，;；\r\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>[x.toLocaleLowerCase(),x])).values()];
+const TOKEN_RE = /(\[(?:EMAIL|KW)-[a-z2-9]{5}\]|\[[a-z2-9]{5}\])/g;
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const EMAIL_EXACT_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+const mappings = new Map(), ids = new Set();
+let textUsed = new Map(), fileUsed = new Map(), textOutput = '', files = [], restoreFiles = [], hl = 0;
+const opt = () => ({email: $('optEmail').checked, showType: $('showType').checked, remember: $('remember').checked});
+const readStored = key => {try{return localStorage.getItem(key)}catch{return null}};
+const writeStored = (key,val) => {try{localStorage.setItem(key,val);return true}catch{return false}};
+const removeStored = key => {try{localStorage.removeItem(key)}catch{}};
+const fmt = entry => opt().showType ? `[${entry.kind}-${entry.id}]` : `[${entry.id}]`;
+function randomId(){let id;do{const bytes=new Uint8Array(5);if(globalThis.crypto?.getRandomValues)crypto.getRandomValues(bytes);else for(let i=0;i<5;i++)bytes[i]=Math.floor(Math.random()*256);id=Array.from(bytes,v=>ALPHABET[v%ALPHABET.length]).join('')}while(ids.has(id));ids.add(id);return id}
+function getToken(kind, original, used){
+  const key=kind+'\u0000'+original;let e=mappings.get(key);
+  if(!e){e={kind,original,id:randomId()};mappings.set(key,e)}
+  used.set(key,e);return fmt(e);
+}
+function persistMap(){if(opt().remember)writeStored(KEY_MAP,JSON.stringify([...mappings.values()]));else removeStored(KEY_MAP)}
+function loadMap(){try{for(const e of JSON.parse(readStored(KEY_MAP)||'[]'))if(['EMAIL','KW'].includes(e.kind)&&typeof e.original==='string'&&/^[a-z2-9]{5}$/.test(e.id)){mappings.set(e.kind+'\u0000'+e.original,e);ids.add(e.id)}}catch{}}
+function saveOptions(){writeStored(KEY_OPT,JSON.stringify({email:opt().email,showType:opt().showType,remember:opt().remember,keywords:$('keywords').value,enc:$('enc').value}))}
+function loadOptions(){try{const o=JSON.parse(readStored(KEY_OPT)||'null');if(o){for(const id of ['email','showType','remember'])if(typeof o[id]==='boolean')$(id==='email'?'optEmail':id).checked=o[id];if(typeof o.keywords==='string')$('keywords').value=o.keywords;if(o.enc)$('enc').value=o.enc}else{$('keywords').value=readStored(KEY_DEF)||''}}catch{}}
+function compiledPattern(){
+  const kws=KEYWORDS().sort((a,b)=>b.length-a.length).map(escRe);
+  const parts=[];if(opt().email)parts.push('(?:'+EMAIL_RE.source+')');if(kws.length)parts.push(...kws.map(k=>'(?:'+k+')'));
+  return parts.length?new RegExp(parts.join('|'),'giu'):null;
+}
+/** 直接在原文字串中執行一次掃描，已存在的代號不會再遭到遮蔽。 */
+function maskText(input,used,withSpans=false){
+  const re=compiledPattern(), chunks=String(input).split(TOKEN_RE), spans=[];let pos=0,nEmail=0,nKeyword=0;
+  const out=chunks.map(chunk=>{
+    if(TOKEN_RE.test(chunk)&&chunk.match(/^(?:\[(?:EMAIL|KW)-[a-z2-9]{5}\]|\[[a-z2-9]{5}\])$/)){TOKEN_RE.lastIndex=0;pos+=chunk.length;return chunk}
+    TOKEN_RE.lastIndex=0;
+    if(!re){pos+=chunk.length;return chunk}
+    const offset=pos;
+    const res=chunk.replace(re,(value,at)=>{
+      const isEmail=opt().email&&EMAIL_EXACT_RE.test(value);
+      const kind=isEmail?'EMAIL':'KW';if(isEmail)nEmail++;else nKeyword++;
+      if(withSpans)spans.push([offset+at,offset+at+value.length]);
+      return getToken(kind,value,used);
+    });pos+=chunk.length;return res;
+  }).join('');
+  return {out,spans,nEmail,nKeyword,n:nEmail+nKeyword};
+}
+function markBackdrop(){/* V3 採用原生 textarea，不使用疊加高亮層。 */}
+function markOutput(str,used){
+  const el=$('output');el.replaceChildren();const tokens=new Set([...used.values()].map(fmt));
+  for(const chunk of str.split(TOKEN_RE)){const n=document.createElement(tokens.has(chunk)?'span':'span');if(tokens.has(chunk))n.className='hl';n.textContent=chunk;el.append(n)}
+}
+function renderText(){textUsed=new Map();const src=$('input').value,r=maskText(src,textUsed,true);textOutput=r.out;markBackdrop(src,r.spans);markOutput(r.out,textUsed);$('inputStat').textContent=src?`輸入 ${src.length} 個字元`:'未輸入文字';$('resultStat').textContent=r.n?`已遮蔽 Email ${r.nEmail} 處、自訂關鍵字 ${r.nKeyword} 處`:'沒有要遮蔽的內容';}
+function usedAll(){return new Map([...textUsed,...fileUsed])}
+function mapObject(){const o={};for(const e of usedAll().values())o[fmt(e)]=e.original;return o}
+function renderMap(){const body=$('mapBody');body.replaceChildren();const a=usedAll();if(!a.size){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=2;cell.className='hint';cell.textContent='目前沒有代號。';row.append(cell);body.append(row);return}for(const e of a.values()){const tr=document.createElement('tr');for(const text of [fmt(e),e.original]){const td=document.createElement('td');td.textContent=text;tr.append(td)}body.append(tr)}}
+function refresh(){saveOptions();renderText();processFiles();renderMap();persistMap();updateKwCount();}
+function updateKwCount(){$('kwCount').textContent=KEYWORDS().length?`（關鍵字 ${KEYWORDS().length} 個）`:''}
+function toast(id,s){const el=$(id);el.textContent=s;clearTimeout(el._clear);el._clear=setTimeout(()=>{el.textContent=''},2400)}
+async function copy(str,id){try{if(navigator.clipboard&&globalThis.isSecureContext)await navigator.clipboard.writeText(str);else{const t=document.createElement('textarea');t.value=str;document.body.append(t);t.select();if(!document.execCommand('copy'))throw Error('clipboard');t.remove()}toast(id,'已複製')}catch{toast(id,'無法自動複製，請手動選取')}}
+function downloadBlob(name,blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000)}
+function download(name,str){downloadBlob(name,new Blob([str],{type:'text/plain;charset=utf-8'}))}
+const sizeStr=n=>n<1024?`${n} B`:n<1048576?`${(n/1024).toFixed(1)} KB`:`${(n/1048576).toFixed(1)} MB`;
+function textLike(buffer,encoding){const t=new TextDecoder(encoding).decode(buffer);return /\u0000/.test(t.slice(0,4000))?null:t}
+async function fileItems(list,encoding){const result=[];for(const file of list){const it={name:file.name,size:file.size,file};try{it.raw=textLike(await file.arrayBuffer(),encoding);if(it.raw===null)it.error='疑似二進位檔，已略過'}catch(e){it.error='讀取失敗'}result.push(it)}return result}
+async function addFiles(list){files.push(...await fileItems(list,$('enc').value));refresh()}
+async function rereadFiles(){files=await fileItems(files.map(x=>x.file),$('enc').value);refresh()}
+function suffixName(name){const i=name.lastIndexOf('.');return i>0?name.slice(0,i)+'.anon'+name.slice(i):name+'.anon.txt'}
+function processFiles(){fileUsed=new Map();for(const it of files){if(it.raw===undefined||it.raw===null)continue;const r=maskText(it.raw,fileUsed);it.out=r.out;it.n=r.n;it.outName=suffixName(it.name)}renderFiles()}
+function makeTableRows(items,tableId,bodyId,previewId,restoreMode){const table=$(tableId),body=$(bodyId);body.replaceChildren();table.hidden=!items.length;$(previewId).hidden=true;
+  items.forEach((it,idx)=>{const tr=document.createElement('tr');for(const v of [it.name,it.outName||it.error||'-',sizeStr(it.size),it.out!==undefined?it.n:(it.error||'—')]){const td=document.createElement('td');td.textContent=v;tr.append(td)}
+  const actions=document.createElement('td'),box=document.createElement('div');box.className='file-actions';const button=(s,fn)=>{const b=document.createElement('button');b.textContent=s;b.onclick=fn;return b};
+  if(it.out!==undefined){box.append(button('預覽',()=>{const p=$(previewId);p.value=it.out;p.hidden=false}),button('下載',()=>download(it.outName,it.out)))}
+  box.append(button('移除',()=>{items.splice(idx,1);if(restoreMode)renderRestoreFiles();else refresh()}));actions.append(box);tr.append(actions);body.append(tr)})}
+function renderFiles(){makeTableRows(files,'fileTable','fileBody','filePreview',false);const active=files.some(f=>f.out!==undefined);for(const id of ['btnZip','btnDlAll','btnMergeDl','btnMergeCopy'])$(id).disabled=!active;$('btnClearFiles').disabled=!files.length}
+function merged(items){return items.filter(it=>it.out!==undefined).map(it=>`===== ${it.outName} =====\n${it.out}`).join('\n\n')}
+function currentMapping(){const dict=Object.create(null);for(const e of mappings.values()){dict[`[${e.kind}-${e.id}]`]=e.original;dict[`[${e.id}]`]=e.original}const value=$('mapImport').value.trim();if(value){const j=JSON.parse(value);if(!j||Array.isArray(j)||typeof j!=='object')throw Error('應為「代號：原始內容」JSON 物件');for(const [k,v]of Object.entries(j))if(typeof v==='string'&&/^\[(?:EMAIL-|KW-)?[a-z2-9]{5}\]$/.test(k))dict[k]=v}return dict}
+function restoreText(src,dict){let count=0;const pat=/\[(?:EMAIL-|KW-)?[a-z2-9]{5}\]/g;const out=String(src).replace(pat,m=>{if(Object.hasOwn(dict,m)){count++;return dict[m]}return m});return{out,n:count}}
+function renderRestore(){try{$('restored').value=restoreText($('aiReply').value,currentMapping()).out;toast('toastRestore','已還原')}catch(e){toast('toastRestore','匯入對照表格式錯誤：'+e.message)}}
+async function addRFiles(list){restoreFiles.push(...await fileItems(list,$('encR').value));processRestoreFiles()}
+async function rereadRFiles(){restoreFiles=await fileItems(restoreFiles.map(f=>f.file),$('encR').value);processRestoreFiles()}
+function restoreFileName(name,dict){return restoreText(name.replace(/\.anon(?=\.[^.]+$|$)/i,''),dict).out}
+function processRestoreFiles(){let dict;try{dict=currentMapping()}catch{toast('toastRFiles','對照表 JSON 格式錯誤');return}for(const it of restoreFiles){if(it.raw===undefined||it.raw===null)continue;const r=restoreText(it.raw,dict);it.out=r.out;it.n=r.n;it.outName=restoreFileName(it.name,dict)}renderRestoreFiles()}
+function renderRestoreFiles(){makeTableRows(restoreFiles,'rfileTable','rfileBody','rfilePreview',true);const active=restoreFiles.some(f=>f.out!==undefined);for(const id of ['btnRZip','btnRDlAll','btnRMergeDl','btnRMergeCopy'])$(id).disabled=!active;$('btnRClear').disabled=!restoreFiles.length}
+function crc32(bytes){let c=~0;for(const b of bytes){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(~c)>>>0}
+function makeZip(items){const enc=new TextEncoder(),chunks=[],central=[];let offset=0;const dt=new Date();const dosTime=(dt.getHours()<<11)|(dt.getMinutes()<<5)|(Math.floor(dt.getSeconds()/2));const dosDate=((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate();
+  for(const item of items){const name=enc.encode(item.name),data=enc.encode(item.out),crc=crc32(data);const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,dosTime,true);lh.setUint16(12,dosDate,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,name.length,true);chunks.push(new Uint8Array(lh.buffer),name,data);
+  const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,dosTime,true);ch.setUint16(14,dosDate,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,name.length,true);ch.setUint32(42,offset,true);central.push(new Uint8Array(ch.buffer),name);offset+=30+name.length+data.length}
+  const size=central.reduce((n,x)=>n+x.length,0),end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,items.length,true);end.setUint16(10,items.length,true);end.setUint32(12,size,true);end.setUint32(16,offset,true);return new Blob([...chunks,...central,new Uint8Array(end.buffer)],{type:'application/zip'})}
+function zipped(items,name,id){const valid=items.filter(x=>x.out!==undefined),seen=new Map();const obj=valid.map(it=>{let name=it.outName.replace(/[\\/:*?"<>|]/g,'_');const count=seen.get(name)||0;seen.set(name,count+1);if(count){const i=name.lastIndexOf('.');name=i>0?name.slice(0,i)+` (${count+1})`+name.slice(i):name+` (${count+1})`}return{name,out:it.out}});downloadBlob(name+'.zip',makeZip(obj));toast(id,`已打包 ${obj.length} 個檔案`)}
+function bindDrop(dropId,inputId,cb){const box=$(dropId),input=$(inputId);box.onclick=()=>input.click();input.onchange=async()=>{await cb([...input.files]);input.value=''};for(const type of ['dragenter','dragover'])box.addEventListener(type,e=>{e.preventDefault();box.classList.add('drag')});for(const type of ['dragleave','drop'])box.addEventListener(type,e=>{e.preventDefault();box.classList.remove('drag')});box.addEventListener('drop',e=>cb([...e.dataTransfer.files]))}
+// 事件
+let debounce;
+function scheduleRefresh(delay=80){clearTimeout(debounce);debounce=setTimeout(refresh,delay)}
+// iOS Safari 的貼上可能先產生 paste/beforeinput 再改變 textarea.value，故延後再檢查。
+const inputEl=$('input');
+inputEl.addEventListener('input',()=>scheduleRefresh(30));
+inputEl.addEventListener('change',()=>refresh());
+inputEl.addEventListener('paste',()=>{setTimeout(refresh,0);setTimeout(refresh,160);setTimeout(refresh,450)});
+inputEl.addEventListener('beforeinput',e=>{if(e.inputType==='insertFromPaste'){setTimeout(refresh,80)}});
+inputEl.addEventListener('compositionend',()=>scheduleRefresh(30));
+$('btnApply').onclick=()=>{refresh();toast('toastIn',inputEl.value?'已處理文字':'文字框目前是空的')};
+$('keywords').oninput=()=>{updateKwCount();scheduleRefresh(180)};
+for(const id of ['optEmail','showType','remember'])$(id).onchange=refresh;
+$('btnPaste').onclick=async()=>{
+  const el=$('input');
+  try{
+    if(!navigator.clipboard?.readText || !globalThis.isSecureContext)throw Error('not supported');
+    const txt=await navigator.clipboard.readText();
+    if(!txt){toast('toastIn','剪貼簿沒有文字');el.focus();return}
+    el.focus();
+    const a=typeof el.selectionStart==='number'?el.selectionStart:el.value.length;
+    const b=typeof el.selectionEnd==='number'?el.selectionEnd:a;
+    el.value=el.value.slice(0,a)+txt+el.value.slice(b);
+    try{el.setSelectionRange(a+txt.length,a+txt.length)}catch{}
+    refresh();toast('toastIn',`已貼上 ${txt.length} 個字元`);
+  }catch{el.focus();toast('toastIn','無法讀取剪貼簿；請在文字框內長按，選擇「貼上」')}
+};
+$('btnSample').onclick=()=>{$('input').value='請寄信到 alice@example.com，並聯絡甲乙公司。\nIP: 192.168.1.1；檔案位置：C:\\Users\\Alice\\report.txt；密碼：hello123。';refresh()};
+$('btnClear').onclick=()=>{$('input').value='';refresh()};
+$('btnCopyOut').onclick=()=>copy(textOutput,'toastOut');
+$('btnHl').onclick=()=>{hl=(hl+1)%4;document.documentElement.dataset.hl=String(hl);$('hlName').textContent=['綠','藍','琥珀','灰'][hl]};
+$('btnKwExport').onclick=()=>download('anonymizer-keywords.json',JSON.stringify({type:'anonymizer-keywords',version:1,keywords:KEYWORDS()},null,2));
+$('btnKwImport').onclick=()=>$('kwFile').click();
+$('kwFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const t=await f.text();let list;try{const j=JSON.parse(t);list=Array.isArray(j)?j:j.keywords;if(!Array.isArray(list))throw Error('invalid')}catch{list=t.split(/[,，;；\r\n]+/)}const merged=new Map([...KEYWORDS(),...list.filter(v=>typeof v==='string')].map(v=>v.trim()).filter(Boolean).map(v=>[v.toLocaleLowerCase(),v]));$('keywords').value=[...merged.values()].join(', ');refresh();toast('toastKw',`已匯入，共 ${merged.size} 個`)}catch{toast('toastKw','匯入失敗')}};
+$('btnKwSaveDef').onclick=()=>toast('toastKw',writeStored(KEY_DEF,KEYWORDS().join(', '))?'已存為預設':'儲存失敗');
+$('btnKwLoadDef').onclick=()=>{const val=readStored(KEY_DEF);if(val===null){toast('toastKw','尚未存有預設');return}$('keywords').value=val;refresh();toast('toastKw','已載入預設')};
+$('btnKwClear').onclick=()=>{$('keywords').value='';refresh();toast('toastKw','已清空')};
+$('btnRegen').onclick=()=>{mappings.clear();ids.clear();removeStored(KEY_MAP);refresh();toast('toastRegen','已重新產生')};
+$('btnCopyMap').onclick=()=>copy(JSON.stringify(mapObject(),null,2),'toastMap');
+$('btnDlMap').onclick=()=>download('anonymizer-map.json',JSON.stringify(mapObject(),null,2));
+$('btnRestore').onclick=renderRestore;$('btnCopyRestore').onclick=()=>copy($('restored').value,'toastRestore');$('mapImport').oninput=processRestoreFiles;
+bindDrop('drop','fileInput',addFiles);bindDrop('rdrop','rfileInput',addRFiles);
+$('enc').onchange=rereadFiles;$('encR').onchange=rereadRFiles;
+$('btnZip').onclick=()=>zipped(files,'anonymized','toastFiles');$('btnRZip').onclick=()=>zipped(restoreFiles,'restored','toastRFiles');
+$('btnDlAll').onclick=async()=>{for(const it of files.filter(f=>f.out!==undefined)){download(it.outName,it.out);await new Promise(r=>setTimeout(r,150))}};
+$('btnRDlAll').onclick=async()=>{for(const it of restoreFiles.filter(f=>f.out!==undefined)){download(it.outName,it.out);await new Promise(r=>setTimeout(r,150))}};
+$('btnMergeDl').onclick=()=>download('merged.anon.txt',merged(files));$('btnRMergeDl').onclick=()=>download('merged.restored.txt',merged(restoreFiles));
+$('btnMergeCopy').onclick=()=>copy(merged(files),'toastFiles');$('btnRMergeCopy').onclick=()=>copy(merged(restoreFiles),'toastRFiles');
+$('btnClearFiles').onclick=()=>{files=[];refresh()};$('btnRClear').onclick=()=>{restoreFiles=[];renderRestoreFiles()};
+$('optsCard').open=readStored(KEY_UI)!=='closed';$('optsCard').addEventListener('toggle',()=>writeStored(KEY_UI,$('optsCard').open?'open':'closed'));
+loadOptions();loadMap();refresh();renderRestoreFiles();
+$('appState').textContent='程式已啟動｜可直接輸入文字，或在文字框內長按貼上';$('appState').classList.add('ready');
+})();
+</script>
+</body>
+</html>
